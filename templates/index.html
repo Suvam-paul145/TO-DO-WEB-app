@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Todo App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome, {{ current_user.username }}</h1>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+        
+        <form class="todo-form" method="POST" action="{{ url_for('add_todo') }}">
+            <input type="text" name="title" placeholder="Add a new task..." required>
+            <button type="submit"><i class="fas fa-plus"></i></button>
+        </form>
+
+        <div class="todo-list">
+            {% for todo in todos %}
+            <div class="todo-item {% if todo.complete %}completed{% endif %}" data-id="{{ todo.id }}">
+                <span class="todo-title">{{ todo.title }}</span>
+                <div class="todo-actions">
+                    <a href="{{ url_for('toggle_todo', id=todo.id) }}" class="toggle-btn">
+                        <i class="fas {% if todo.complete %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                    </a>
+                    <a href="{{ url_for('delete_todo', id=todo.id) }}" class="delete-btn">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
