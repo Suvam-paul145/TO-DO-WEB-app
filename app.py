@@ -6,15 +6,19 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'  # Change this to a secure secret key
 # Use an absolute path for the database in a writable directory
-db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'todo.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+if os.environ.get('VERCEL'):
+    # Use a writable directory in the Vercel environment
+    db_path = '/tmp/todo.db'
+else:
+    # Use a local database for development
+    db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'todo.db')
+    # Ensure the instance folder exists
+    try:
+        os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'))
+    except OSError:
+        pass
 
-# Ensure the instance folder exists
-try:
-    os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'))
-except OSError:
-    pass
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
