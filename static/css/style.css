@@ -94,10 +94,14 @@ body {
     gap: 10px;
 }
 
-.todo-actions a {
+.todo-actions button {
     color: #6c757d;
     text-decoration: none;
     transition: color 0.3s;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px; /* Match icon size */
 }
 
 .toggle-btn:hover {

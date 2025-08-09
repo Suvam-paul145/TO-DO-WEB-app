@@ -5,8 +5,16 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'  # Change this to a secure secret key
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
+# Use an absolute path for the database in a writable directory
+db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'todo.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Ensure the instance folder exists
+try:
+    os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'))
+except OSError:
+    pass
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -14,43 +22,59 @@ login_manager.login_view = 'login'
 
 db.init_app(app)
 
+# This creates the database tables from your models
+with app.app_context():
+    db.create_all()
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# API endpoint to get all todos
+@app.route('/api/todos')
+@login_required
+def get_todos():
+    todos = Todo.query.filter_by(user_id=current_user.id).all()
+    return jsonify([{'id': todo.id, 'title': todo.title, 'complete': todo.complete} for todo in todos])
+
 @app.route('/')
 @login_required
 def index():
-    todos = Todo.query.filter_by(user_id=current_user.id).all()
-    return render_template('index.html', todos=todos)
+    # The index now just serves the container page.
+    # The todos will be fetched by JavaScript.
+    return render_template('index.html')
 
-@app.route('/add_todo', methods=['POST'])
+@app.route('/api/add_todo', methods=['POST'])
 @login_required
 def add_todo():
-    title = request.form.get('title')
+    data = request.get_json()
+    title = data.get('title')
     if title:
         todo = Todo(title=title, user_id=current_user.id)
         db.session.add(todo)
         db.session.commit()
-    return redirect(url_for('index'))
+        return jsonify({'id': todo.id, 'title': todo.title, 'complete': todo.complete}), 201
+    return jsonify({'error': 'Title is required'}), 400
 
-@app.route('/toggle_todo/<int:id>')
+@app.route('/api/toggle_todo/<int:id>', methods=['POST'])
 @login_required
 def toggle_todo(id):
     todo = Todo.query.get_or_404(id)
     if todo.user_id == current_user.id:
         todo.complete = not todo.complete
         db.session.commit()
-    return redirect(url_for('index'))
+        return jsonify({'id': todo.id, 'title': todo.title, 'complete': todo.complete})
+    return jsonify({'error': 'Unauthorized'}), 403
 
-@app.route('/delete_todo/<int:id>')
+@app.route('/api/delete_todo/<int:id>', methods=['DELETE'])
 @login_required
 def delete_todo(id):
     todo = Todo.query.get_or_404(id)
     if todo.user_id == current_user.id:
         db.session.delete(todo)
         db.session.commit()
-    return redirect(url_for('index'))
+        return jsonify({'result': 'Todo deleted'})
+    return jsonify({'error': 'Unauthorized'}), 403
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -83,11 +107,6 @@ def register():
 def logout():
     logout_user()
     return redirect(url_for('login'))
-
-# if __name__ == '__main__':
-#     with app.app_context():
-#         db.create_all()
-#     app.run(debug=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
