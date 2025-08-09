@@ -76,6 +76,20 @@ def delete_todo(id):
         return jsonify({'result': 'Todo deleted'})
     return jsonify({'error': 'Unauthorized'}), 403
 
+@app.route('/api/update_todo/<int:id>', methods=['PUT'])
+@login_required
+def update_todo(id):
+    todo = Todo.query.get_or_404(id)
+    if todo.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    data = request.get_json()
+    new_title = data.get('title')
+    if not new_title:
+        return jsonify({'error': 'Title is required'}), 400
+    todo.title = new_title
+    db.session.commit()
+    return jsonify({'id': todo.id, 'title': todo.title, 'complete': todo.complete})
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

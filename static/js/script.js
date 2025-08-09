@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button class="toggle-btn">
                     <i class="fas ${todo.complete ? 'fa-check-circle' : 'fa-circle'}"></i>
                 </button>
+                <button class="edit-btn">
+                    <i class="fas fa-edit"></i>
+                </button>
                 <button class="delete-btn">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -59,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Event listener for toggle and delete actions (using event delegation)
+    // Event listener for toggle, edit and delete actions (using event delegation)
     todoList.addEventListener('click', async (e) => {
         const target = e.target;
         const todoItem = target.closest('.todo-item');
@@ -84,6 +87,45 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.error('Error toggling todo:', error);
             }
+        }
+
+        // Handle edit
+        if (target.closest('.edit-btn')) {
+            const titleSpan = todoItem.querySelector('.todo-title');
+            const currentTitle = titleSpan.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            todoItem.insertBefore(input, titleSpan);
+            titleSpan.style.display = 'none';
+            input.focus();
+
+            input.addEventListener('blur', async () => {
+                const newTitle = input.value.trim();
+                if (newTitle && newTitle !== currentTitle) {
+                    try {
+                        const response = await fetch(`/api/update_todo/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title: newTitle })
+                        });
+                        if (!response.ok) throw new Error('Failed to update todo');
+                        const updatedTodo = await response.json();
+                        titleSpan.textContent = updatedTodo.title;
+                    } catch (error) {
+                        console.error('Error updating todo:', error);
+                        titleSpan.textContent = currentTitle; // Revert on error
+                    }
+                }
+                input.remove();
+                titleSpan.style.display = '';
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            });
         }
 
         // Handle delete
