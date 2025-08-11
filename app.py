@@ -3,6 +3,9 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from database import db, User, Todo
 import os
 
+print("ENVIRONMENT VARIABLES:")
+print(os.environ)
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'postgres://910f3c0ee7c2259b53f42cf620f8dc127c7fd97b28311a51c5f767ea6b24c4ae:sk_AiPuONVNb1SkhBUvFTZfH@db.prisma.io:5432/?sslmode=require'  # Change this to a secure secret key
 # Database configuration
