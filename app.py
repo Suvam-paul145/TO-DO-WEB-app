@@ -3,24 +3,22 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from database import db, User, Todo
 import os
 
-print("ENVIRONMENT VARIABLES:")
-print(os.environ)
-
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'postgres://910f3c0ee7c2259b53f42cf620f8dc127c7fd97b28311a51c5f767ea6b24c4ae:sk_AiPuONVNb1SkhBUvFTZfH@db.prisma.io:5432/?sslmode=require'  # Change this to a secure secret key
-# Database configuration
-if os.environ.get('prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19BaVB1T05WTmIxU2toQlV2RlRaZkgiLCJhcGlfa2V5IjoiMDFLMkNSRTlYS0FRR1NLR1RITUpZS1BXMDgiLCJ0ZW5hbnRfaWQiOiI5MTBmM2MwZWU3YzIyNTliNTNmNDJjZjYyMGY4ZGMxMjdjN2ZkOTdiMjgzMTFhNTFjNWY3NjdlYTZiMjRjNGFlIiwiaW50ZXJuYWxfc2VjcmV0IjoiOGViZTBiMjUtZGEyMS00MTkwLTgzNGMtZjE1OWM4ZGM0Nzk1In0.g1M3UjElMyuJmPVjsWTf3_ysiS5hT4Rilkikg5LPZawL'):
-    # Use PostgreSQL on Vercel
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19BaVB1T05WTmIxU2toQlV2RlRaZkgiLCJhcGlfa2V5IjoiMDFLMkNSRTlYS0FRR1NLR1RITUpZS1BXMDgiLCJ0ZW5hbnRfaWQiOiI5MTBmM2MwZWU3YzIyNTliNTNmNDJjZjYyMGY4ZGMxMjdjN2ZkOTdiMjgzMTFhNTFjNWY3NjdlYTZiMjRjNGFlIiwiaW50ZXJuYWxfc2VjcmV0IjoiOGViZTBiMjUtZGEyMS00MTkwLTgzNGMtZjE1OWM4ZGM0Nzk1In0.g1M3UjElMyuJmPVjsWTf3_ysiS5hT4Rilkikg5LPZaw').replace("postgres://", "postgresql://", 1)
+app.config['SECRET_KEY'] = 'your-secret-key'  # Change this to a secure secret key
+# Use an absolute path for the database in a writable directory
+if os.environ.get('VERCEL'):
+    # Use a writable directory in the Vercel environment
+    db_path = '/tmp/todo.db'
 else:
-    # Use SQLite for local development
+    # Use a local database for development
     db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'todo.db')
     # Ensure the instance folder exists
     try:
         os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'))
     except OSError:
         pass
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
